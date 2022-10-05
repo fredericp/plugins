@@ -203,6 +203,23 @@ class ImagePickerAndroid extends ImagePickerPlatform {
   }
 
   @override
+  Future<List<XFile>?> getMultiFile() async {
+    final List<dynamic>? paths = await _getMultiFilePath();
+    if (paths == null) {
+      return null;
+    }
+
+    return paths.map((dynamic path) => XFile(path as String)).toList();
+  }
+
+  Future<List<dynamic>?> _getMultiFilePath() {
+    return _channel.invokeMethod<List<dynamic>?>(
+      'pickMultiFile',
+      <String, dynamic>{},
+    );
+  }
+
+  @override
   Future<XFile?> getVideo({
     required ImageSource source,
     CameraDevice preferredCameraDevice = CameraDevice.rear,

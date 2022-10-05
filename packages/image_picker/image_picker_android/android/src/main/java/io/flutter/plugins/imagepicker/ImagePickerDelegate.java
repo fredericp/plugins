@@ -78,6 +78,8 @@ public class ImagePickerDelegate
   @VisibleForTesting static final int REQUEST_CODE_TAKE_IMAGE_WITH_CAMERA = 2343;
   @VisibleForTesting static final int REQUEST_CAMERA_IMAGE_PERMISSION = 2345;
   @VisibleForTesting static final int REQUEST_CODE_CHOOSE_MULTI_IMAGE_FROM_GALLERY = 2346;
+  @VisibleForTesting static final int REQUEST_CODE_CHOOSE_MULTI_FILE_FROM_GALLERY = 2347;
+
   @VisibleForTesting static final int REQUEST_CODE_CHOOSE_VIDEO_FROM_GALLERY = 2352;
   @VisibleForTesting static final int REQUEST_CODE_TAKE_VIDEO_WITH_CAMERA = 2353;
   @VisibleForTesting static final int REQUEST_CAMERA_VIDEO_PERMISSION = 2355;
@@ -323,6 +325,16 @@ public class ImagePickerDelegate
     launchMultiPickImageFromGalleryIntent();
   }
 
+  public void chooseMultiFileFromGallery(MethodCall methodCall, MethodChannel.Result result) {
+    if (!setPendingMethodCallAndResult(methodCall, result)) {
+      finishWithAlreadyActiveError(result);
+      return;
+    }
+
+    launchMultiPickFileFromGalleryIntent();
+  }
+
+
   private void launchPickImageFromGalleryIntent() {
     Intent pickImageIntent = new Intent(Intent.ACTION_GET_CONTENT);
     pickImageIntent.setType("image/*");
@@ -338,6 +350,19 @@ public class ImagePickerDelegate
     pickImageIntent.setType("image/*");
 
     activity.startActivityForResult(pickImageIntent, REQUEST_CODE_CHOOSE_MULTI_IMAGE_FROM_GALLERY);
+  }
+
+  private void launchMultiPickFileFromGalleryIntent() {
+    Intent pickImageIntent = new Intent(Intent.ACTION_GET_CONTENT);
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+      pickImageIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+    }
+    String[] mimetypes = {"image/*", "application/pdf"};
+    pickImageIntent.setType("image/*,application/pdf");
+    pickImageIntent.putExtra(Intent.EXTRA_MIME_TYPES, mimetypes);
+
+
+    activity.startActivityForResult(pickImageIntent, REQUEST_CODE_CHOOSE_MULTI_FILE_FROM_GALLERY);
   }
 
   public void takeImageWithCamera(MethodCall methodCall, MethodChannel.Result result) {
@@ -466,6 +491,9 @@ public class ImagePickerDelegate
       case REQUEST_CODE_CHOOSE_MULTI_IMAGE_FROM_GALLERY:
         handleChooseMultiImageResult(resultCode, data);
         break;
+      case  REQUEST_CODE_CHOOSE_MULTI_FILE_FROM_GALLERY:
+        handleChooseMultiFileResult(resultCode, data);
+        break;
       case REQUEST_CODE_TAKE_IMAGE_WITH_CAMERA:
         handleCaptureImageResult(resultCode);
         break;
@@ -504,6 +532,24 @@ public class ImagePickerDelegate
         paths.add(fileUtils.getPathFromUri(activity, intent.getData()));
       }
       handleMultiImageResult(paths, false);
+      return;
+    }
+
+    // User cancelled choosing a picture.
+    finishWithSuccess(null);
+  }
+
+private void handleChooseMultiFileResult(int resultCode, Intent intent) {
+    if (resultCode == Activity.RESULT_OK && intent != null) {
+      ArrayList<String> paths = new ArrayList<>();
+      if (intent.getClipData() != null) {
+        for (int i = 0; i < intent.getClipData().getItemCount(); i++) {
+          paths.add(fileUtils.getPathFromUri(activity, intent.getClipData().getItemAt(i).getUri()));
+        }
+      } else {
+        paths.add(fileUtils.getPathFromUri(activity, intent.getData()));
+      }
+      handleMultiFileResult(paths);
       return;
     }
 
@@ -579,6 +625,11 @@ public class ImagePickerDelegate
     } else {
       finishWithListSuccess(paths);
     }
+  }
+
+  private void handleMultiFileResult(
+      ArrayList<String> paths) {
+      finishWithListSuccess(paths);
   }
 
   private void handleImageResult(String path, boolean shouldDeleteOriginalIfScaled) {

@@ -53,6 +53,16 @@ class MethodChannelImagePicker extends ImagePickerPlatform {
     return paths.map((dynamic path) => PickedFile(path as String)).toList();
   }
 
+  @override
+  Future<List<PickedFile>?> pickMultiFile() async {
+    final List<dynamic>? paths = await _getMultiFilePath();
+    if (paths == null) {
+      return null;
+    }
+
+    return paths.map((dynamic path) => PickedFile(path as String)).toList();
+  }
+
   Future<List<dynamic>?> _getMultiImagePath({
     double? maxWidth,
     double? maxHeight,
@@ -78,6 +88,18 @@ class MethodChannelImagePicker extends ImagePickerPlatform {
         'maxWidth': maxWidth,
         'maxHeight': maxHeight,
         'imageQuality': imageQuality,
+        'requestFullMetadata': requestFullMetadata,
+      },
+    );
+  }
+
+  Future<List<dynamic>?> _getMultiFilePath({
+    bool requestFullMetadata = true,
+  }) {
+    
+    return _channel.invokeMethod<List<dynamic>?>(
+      'pickMultiFile',
+      <String, dynamic>{
         'requestFullMetadata': requestFullMetadata,
       },
     );

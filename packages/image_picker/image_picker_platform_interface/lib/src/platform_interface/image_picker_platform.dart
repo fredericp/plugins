@@ -215,6 +215,10 @@ abstract class ImagePickerPlatform extends PlatformInterface {
     throw UnimplementedError('getMultiImage() has not been implemented.');
   }
 
+  Future<List<XFile>?> getMultiFile() {
+    throw UnimplementedError('getMultiFile() has not been implemented.');
+  }
+
   /// Returns a [XFile] containing the video that was picked.
   ///
   /// The [source] argument controls where the video comes from. This can

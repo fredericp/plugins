@@ -274,6 +274,10 @@ class ImagePicker {
     );
   }
 
+  Future<List<XFile>?> pickMultiFile() {
+    return platform.getMultiFile();
+  }
+
   /// Returns an [XFile] object wrapping the video that was picked.
   ///
   /// The returned [XFile] is intended to be used within a single APP session. Do not save the file path and use it across sessions.
